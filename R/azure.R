@@ -1,33 +1,47 @@
-#' List All NHP Results Data Files and their Metadata
+#' List All NHP Model Runs and their Metadata from Azure Table Storage
 #'
-#' @param container_results Name of the blob_container/storage_container object
-#'     that stores results files.
+#' @param runs_table Character. Name of the Azure Table Storage table.
+#' @param table_ep Character. The endpoint for Azure Table Storage actions.
+#' @param auth_token Token. An Azure token for the Table resource.
+#' @param entity_query Character. OData query string to pre-filter the table.
+#'     Defaults to discard any entities that represent incomplete model runs.
+#' @param property_selection Character. OData select string for properties
+#'     (comma-separated and no spaces, e.g. `"X,Y,Z"``). Defaults to `NULL`,
+#'     meaning retain all.
 #'
-#' @details Assumes you're connecting to the container that holds NHP results.
+#' @details
+#' This function used to glean metadata stored on blobs in Azure Blob Storage,
+#' but now it uses a canonical lookup table in Azure Table Storage.
 #'
-#' @return A data.frame. As many rows as there are files in `container`. As many
-#'    columns as there are metadata elements, plus the file path.
-#'
-#' @importFrom rlang .data
+#' @return A data.frame. Each row is a Azure Storage Table table entity (a model
+#'     run) and each column is a property in that table.
 #'
 #' @export
 #'
-#' @examples \dontrun{get_container() |> get_nhp_result_sets()}
+#' @examples \dontrun{get_nhp_result_sets()}
 get_nhp_result_sets <- function(
-    container_results = Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS")
+  runs_table = Sys.getenv("AZ_TABLE_NAME"),
+  table_ep = Sys.getenv("AZ_TABLE_EP"),
+  auth_token = azkit::get_auth_token(),
+  entity_query = "status eq 'complete'",
+  property_selection = NULL # defaults to all columns
 ) {
+  runs_table <- azkit::read_azure_table(
+    table_name = runs_table,
+    table_endpoint = table_ep,
+    filter = entity_query,
+    select = property_selection,
+    token = auth_token
+  )
 
-  container <- get_container(container_name = container_results)
-
-  container |>
-    AzureStor::list_blobs("prod", info = "all", recursive = TRUE) |>
-    dplyr::filter(!.data[["isdir"]]) |>
-    purrr::pluck("name") |>
-    purrr::set_names() |>
-    purrr::map(\(name, ...) AzureStor::get_storage_metadata(container, name)) |>
-    dplyr::bind_rows(.id = "file") |>
-    dplyr::mutate(dplyr::across("viewable", as.logical))
-
+  # Apply changes so the table matches existing expectations of the codebase
+  runs_table |>
+    dplyr::rename(file = results_json_gz_path) |>
+    dplyr::mutate(
+      create_datetime = create_datetime |>
+        lubridate::as_datetime() |>
+        format("%Y%M%d_%H%M%S") # YYYYMMDD_HHMMSS
+    )
 }
 
 #' Connect to an Azure Container
@@ -49,12 +63,11 @@ get_nhp_result_sets <- function(
 #' @examples
 #' \dontrun{get_container()}
 get_container <- function(
-    tenant = Sys.getenv("AZ_TENANT_ID"),
-    app_id = Sys.getenv("AZ_APP_ID"),
-    ep_uri = Sys.getenv("AZ_STORAGE_EP"),
-    container_name
+  tenant = Sys.getenv("AZ_TENANT_ID"),
+  app_id = Sys.getenv("AZ_APP_ID"),
+  ep_uri = Sys.getenv("AZ_STORAGE_EP"),
+  container_name
 ) {
-
   # if the app_id variable is empty, we assume that this is running on an Azure VM,
   # and then we will use Managed Identities for authentication.
   token <- if (app_id != "") {
@@ -72,7 +85,6 @@ get_container <- function(
   ep_uri |>
     AzureStor::blob_endpoint(token = token) |>
     AzureStor::storage_container(container_name)
-
 }
 
 #' Unzip, Read and Parse an NHP Results File
@@ -95,10 +107,9 @@ get_container <- function(
 #' r <- container |> get_nhp_results(file)
 #' }
 get_nhp_results <- function(
-    container_results = Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS"),
-    file
+  container_results = Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS"),
+  file
 ) {
-
   container <- get_container(container_name = container_results)
 
   temp_file <- withr::local_tempfile()
@@ -106,12 +117,10 @@ get_nhp_results <- function(
 
   readBin(temp_file, raw(), n = file.size(temp_file)) |>
     jsonlite::parse_gzjson_raw(simplifyVector = FALSE) |>
-    parse_results()  # applies patch logic dependent on app_version in params
-
+    parse_results() # applies patch logic dependent on app_version in params
 }
 
 get_baseline_and_projections <- function(r_trust) {
-
   r_trust[["results"]][["default"]] |>
     dplyr::group_by(measure, pod, sitetret) |>
     dplyr::summarise(
@@ -120,7 +129,6 @@ get_baseline_and_projections <- function(r_trust) {
       lwr_ci = sum(lwr_ci),
       upr_ci = sum(upr_ci)
     )
-
 }
 
 get_stepcounts <- function(r_trust) {
@@ -128,7 +136,6 @@ get_stepcounts <- function(r_trust) {
 }
 
 get_losgroup <- function(r_trust) {
-
   los_group_is_null <- is.null(r_trust[["results"]][["los_group"]])
 
   if (los_group_is_null) {
@@ -139,5 +146,4 @@ get_losgroup <- function(r_trust) {
   }
 
   r_trust
-
 }

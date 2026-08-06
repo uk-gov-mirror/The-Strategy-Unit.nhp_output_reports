@@ -4,7 +4,7 @@
 ## comparison of estimated mitigated activity
 purrr::walk(list.files("R", ".R$", , TRUE, TRUE), source)
 
-scheme_code = "RGN" # add scheme_code for the scenario here to replace XYZ
+scheme_code = "XXX" # add scheme_code for the scenario here to replace XYZ
 # If the scheme has site codes already recorded or if all sites are required then set site_codes=NULL, otherwise set sites manually
 scenario_name_1 <- "SOC"
 scenario_name_2 <- "OBC"
@@ -33,17 +33,17 @@ final_report_ndg2 <- result_sets |>
 
 validation_report_ndg2 <- result_sets |>
   dplyr::filter(dataset==scheme_code) |>
-  dplyr::filter(run_stage=="validation_initial_ndg2")
+  dplyr::filter(run_stage=="validation_report_ndg2")
 
 
 validation_report_ndg3 <- result_sets |>
   dplyr::filter(dataset==scheme_code) |>
-  dplyr::filter(run_stage=="validation_initial_ndg2")
+  dplyr::filter(run_stage=="validation_report_ndg3")
 
 
 opening_date_scenario <- result_sets |>
   dplyr::filter(dataset==scheme_code) |>
-  dplyr::filter(run_stage=="validation_initial_ndg2")
+  dplyr::filter(run_stage=="validation_report_ndg2_opening")
 
 
 ##### Get stepcounts via parquet using azkit where necessary #####
@@ -58,7 +58,7 @@ model_version <- get_model_version(validation_report_ndg2)
 if(model_version=="v5.2"){
   validation_report_ndg2_path <- result_sets |>
     dplyr::filter(dataset==scheme_code) |>
-    dplyr::filter(run_stage=="validation_initial_ndg2") |>
+    dplyr::filter(run_stage=="validation_report_ndg2") |>
     dplyr::pull(aggregated_results_path)
 
   validation_report_ndg2_azkit_stepcounts <- azkit::read_azure_parquet(
@@ -73,7 +73,7 @@ model_version <- get_model_version(validation_report_ndg3)
 if(model_version=="v5.2"){
   validation_report_ndg3_path <- result_sets |>
     dplyr::filter(dataset==scheme_code) |>
-    dplyr::filter(run_stage=="validation_initial_ndg2") |>
+    dplyr::filter(run_stage=="validation_report_ndg3") |>
     dplyr::pull(aggregated_results_path)
 
   validation_report_ndg3_azkit_stepcounts <- azkit::read_azure_parquet(
@@ -90,7 +90,7 @@ model_version <- get_model_version(opening_date_scenario)
 if(model_version=="v5.2"){
   opening_date_scenario_path <- result_sets |>
     dplyr::filter(dataset==scheme_code) |>
-    dplyr::filter(run_stage=="validation_initial_ndg2") |>
+    dplyr::filter(run_stage=="validation_report_ndg2_opening") |>
     dplyr::pull(aggregated_results_path)
 
   opening_date_scenario_azkit_stepcounts <- azkit::read_azure_parquet(

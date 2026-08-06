@@ -32,27 +32,27 @@ tbl_soc_obc_p90 <- soc_obc |>
   gt::tab_footnote(
     footnote = "Not available in SOC scenario",
     locations = gt::cells_stub(
-      c("Delivery admissions", "Delivery beddays", "SDEC attendances (type 5)")
+      c("Delivery admissions", "Delivery beddays")
     )
   ) |>
   gt::tab_footnote(
     footnote = "Deliveries are a subset of maternity.",
     locations = gt::cells_stub(
       c("Delivery admissions", "Delivery beddays")
-    )
-  ) |>
+      )
+    ) |>
   gt::opt_footnote_marks(marks = "numbers") |>
   gt_theme()
 
-if(soc_numeric_version<2.2){
-  tbl_soc_obc_p90 <-
-    tbl_soc_obc_p90 |>
-    gt::tab_footnote(
-      footnote = "Not available in SOC scenario",
-      locations = gt::cells_stub(
-        c("Regular Day Attender admissions")
-      ))
-}
+# if(soc_numeric_version<2.2){
+#   tbl_soc_obc_p90 <-
+#     tbl_soc_obc_p90 |>
+#     gt::tab_footnote(
+#       footnote = "Not available in SOC scenario",
+#       locations = gt::cells_stub(
+#         c("Regular Day Attender admissions")
+#       ))
+# }
 
 tbl_soc_obc_p90
 }

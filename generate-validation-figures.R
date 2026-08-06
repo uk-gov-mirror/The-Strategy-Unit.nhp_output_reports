@@ -4,7 +4,7 @@
 ## comparison of estimated mitigated activity
 purrr::walk(list.files("R", ".R$", , TRUE, TRUE), source)
 
-scheme_code = "RAS" # add scheme_code for the scenario here to replace XYZ
+scheme_code = "RGN" # add scheme_code for the scenario here to replace XYZ
 # If the scheme has site codes already recorded or if all sites are required then set site_codes=NULL, otherwise set sites manually
 scenario_name_1 <- "SOC"
 scenario_name_2 <- "OBC"
@@ -12,10 +12,14 @@ scenario_name_2 <- "OBC"
 site_codes = NULL
 if (is.null(site_codes)) site_codes <- get_sites(scheme_code)
 # site_codes = list( # change each element (each can be NULL to mean 'all')
-#   ip  = "R0A66",
-#   op  = "R0A66",
-#   aae = "R0A66"
-# )
+site_codes = list( # change each element (each can be NULL to mean 'all')
+  ip  = c("RGN90","J4I0D"),
+  op  = c("RGN90","RGN95"),
+  aae = NULL
+)
+
+# set up container for getting data via Azkit from Azure
+container <- azkit::get_container(Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS")) ##### new code###
 
 result_sets = get_nhp_result_sets()
 
@@ -29,15 +33,74 @@ final_report_ndg2 <- result_sets |>
 
 validation_report_ndg2 <- result_sets |>
   dplyr::filter(dataset==scheme_code) |>
-  dplyr::filter(run_stage=="validation_report_ndg2")
+  dplyr::filter(run_stage=="validation_initial_ndg2")
+
 
 validation_report_ndg3 <- result_sets |>
   dplyr::filter(dataset==scheme_code) |>
-  dplyr::filter(run_stage=="validation_report_ndg3")
+  dplyr::filter(run_stage=="validation_initial_ndg2")
+
 
 opening_date_scenario <- result_sets |>
   dplyr::filter(dataset==scheme_code) |>
-  dplyr::filter(run_stage=="validation_report_ndg2_opening")
+  dplyr::filter(run_stage=="validation_initial_ndg2")
+
+
+##### Get stepcounts via parquet using azkit where necessary #####
+
+get_model_version <- function(scenario){
+  scenario |> dplyr::pull(app_version)
+}
+
+model_version <- get_model_version(validation_report_ndg2)
+
+
+if(model_version=="v5.2"){
+  validation_report_ndg2_path <- result_sets |>
+    dplyr::filter(dataset==scheme_code) |>
+    dplyr::filter(run_stage=="validation_initial_ndg2") |>
+    dplyr::pull(aggregated_results_path)
+
+  validation_report_ndg2_azkit_stepcounts <- azkit::read_azure_parquet(
+    container,
+    paste0(validation_report_ndg2_path,"/step_counts.parquet")
+  ) |>
+    dplyr::filter(model_run>=1)
+}
+
+model_version <- get_model_version(validation_report_ndg3)
+
+if(model_version=="v5.2"){
+  validation_report_ndg3_path <- result_sets |>
+    dplyr::filter(dataset==scheme_code) |>
+    dplyr::filter(run_stage=="validation_initial_ndg2") |>
+    dplyr::pull(aggregated_results_path)
+
+  validation_report_ndg3_azkit_stepcounts <- azkit::read_azure_parquet(
+    container,
+    paste0(validation_report_ndg3_path,"/step_counts.parquet")
+  ) |>
+    dplyr::filter(model_run>=1)
+}
+
+
+model_version <- get_model_version(opening_date_scenario)
+
+
+if(model_version=="v5.2"){
+  opening_date_scenario_path <- result_sets |>
+    dplyr::filter(dataset==scheme_code) |>
+    dplyr::filter(run_stage=="validation_initial_ndg2") |>
+    dplyr::pull(aggregated_results_path)
+
+  opening_date_scenario_azkit_stepcounts <- azkit::read_azure_parquet(
+    container,
+    paste0(opening_date_scenario_path,"/step_counts.parquet")
+  ) |>
+    dplyr::filter(model_run>=1)
+}
+
+#### end of extra code#####
 
 selected_results_list <- list(final_report_ndg1,
                               final_report_ndg2,
@@ -122,7 +185,7 @@ soc_obc_table <- get_soc_obc_table(soc_obc_data,soc_numeric_version,scenario_nam
 cagr_table <- get_validation_cagr_table(r_final_report_ndg2, r_validation_report_ndg2, site_codes,scenario_name_1,scenario_name_2)
 
 #get the total mitigation table
-total_miti_table <- get_total_mitigation_table(r_final_report_ndg2, r_validation_report_ndg2, site_codes,scenario_name_1,scenario_name_2)
+total_miti_table <- get_total_mitigation_table(r_final_report_ndg2, r_validation_report_ndg2, site_codes,scenario_name_1,scenario_name_2) ###THIS ONE
 
 # get the mitigation data
 tpma_impact_table <- get_tpma_impact_table(r_final_report_ndg2, r_validation_report_ndg2, site_codes,scenario_name_1,scenario_name_2)

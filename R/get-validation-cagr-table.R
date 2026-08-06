@@ -205,6 +205,16 @@ get_validation_cagr_table <- function(soc_scenario, obc_scenario, site_codes,sce
 
   ### OBC
 
+  mod_info_downloads_reformat_step_counts <- function(dat) {
+    dat |>
+      dplyr::summarise(
+        .by = -c(.data$model_run, .data$value),
+        model_runs = list(.data$value),
+        value = purrr::map_dbl(.data$model_runs, mean)
+      )
+  }
+
+
   # DG & NDG for OP
   baseline <- get_stepcounts(obc_scenario) |>
     dplyr::filter(activity_type == "op") |>
@@ -212,6 +222,15 @@ get_validation_cagr_table <- function(soc_scenario, obc_scenario, site_codes,sce
     filter_sites_conditionally(site_codes$op) |>
     dplyr::summarise(value = sum(value)) |>
     dplyr::pull()
+
+  if(get_model_version(validation_report_ndg2)=="v5.2"){
+    baseline <- mod_info_downloads_reformat_step_counts(validation_report_ndg2_azkit_stepcounts) |>
+      dplyr::filter(activity_type == "op") |>
+      dplyr::filter(change_factor == "baseline") |>
+      filter_sites_conditionally(site_codes$op) |>
+      dplyr::summarise(value = sum(value)) |>
+      dplyr::pull()
+      }
 
   baseline_adjustment <- get_stepcounts(obc_scenario) |>
     dplyr::filter(activity_type == "op") |>
@@ -301,6 +320,15 @@ get_validation_cagr_table <- function(soc_scenario, obc_scenario, site_codes,sce
     filter_sites_conditionally(site_codes$aae) |>
     dplyr::summarise(value = sum(value)) |>
     dplyr::pull()
+
+  if(get_model_version(validation_report_ndg2)=="v5.2"){
+    baseline <- mod_info_downloads_reformat_step_counts(validation_report_ndg2_azkit_stepcounts) |>
+      dplyr::filter(activity_type == "aae") |>
+      dplyr::filter(change_factor == "baseline") |>
+      filter_sites_conditionally(site_codes$aae) |>
+      dplyr::summarise(value = sum(value)) |>
+      dplyr::pull()
+      }
 
   baseline_adjustment <- get_stepcounts(obc_scenario)|>
     dplyr::filter(activity_type == "aae") |>

@@ -48,24 +48,24 @@ get_soc_obc_table <- function(soc_obc_data,soc_numeric_version,scenario_name_1,s
       values = c("Delivery admissions", "Delivery beddays"),
       extents = c("body", "stub")
     ) |>
-    gt::tab_footnote(
-      footnote = "Not available in SOC scenario",
-      locations = gt::cells_stub(
-        c("Delivery admissions", "Delivery beddays", "SDEC attendances (type 5)")
-      )
-    ) |>
+    # gt::tab_footnote(
+    #   footnote = "Not available in SOC scenario",
+    #   locations = gt::cells_stub(
+    #     c("Delivery admissions", "Delivery beddays", "SDEC attendances (type 5)")
+    #   )
+    # ) |>
     gt::tab_footnote(
       footnote = "Deliveries are a subset of maternity.",
       locations = gt::cells_stub(
         c("Delivery admissions", "Delivery beddays")
       )
     )  |>
-    gt::tab_footnote(
-      footnote = "Activity assumed to be SDEC due to TPMAs. Care should be taken in interpretation as recording of activity is in flux.",
-      locations = gt::cells_stub(
-        c("SDEC attendances (type 5)")
-      )
-    )|>
+    # gt::tab_footnote(
+    #   footnote = "Activity assumed to be SDEC due to TPMAs. Care should be taken in interpretation as recording of activity is in flux.",
+    #   locations = gt::cells_stub(
+    #     c("SDEC attendances (type 5)")
+    #   )
+    # )|>
     gt::tab_source_note(
       source_note = "Note: CAGR is calculated using adjusted baseline values (applied baseline and COVID adjustments),
       so these figures may differ from baseline values shown in other tables."
@@ -78,14 +78,14 @@ get_soc_obc_table <- function(soc_obc_data,soc_numeric_version,scenario_name_1,s
   #   footnote = "Note: In v1 Maternity Growth...",
 
 
-  if(soc_numeric_version<2.2){
-    tbl_soc_obc <-
-    tbl_soc_obc |>
-      gt::tab_footnote(
-        footnote = "Not available in SOC scenario",
-        locations = gt::cells_stub(
-          c("Regular Day Attender admissions")
-        ))
-      }
+  # if(soc_numeric_version<2.2){
+  #   tbl_soc_obc <-
+  #   tbl_soc_obc |>
+  #     gt::tab_footnote(
+  #       footnote = "Not available in SOC scenario",
+  #       locations = gt::cells_stub(
+  #         c("Regular Day Attender admissions")
+  #       ))
+  #     }
   tbl_soc_obc
 }

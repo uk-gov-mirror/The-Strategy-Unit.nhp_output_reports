@@ -5,9 +5,22 @@ generate_values_list <- function(
     char_out = TRUE  # convert all output values to strings?
 ) {
 
+  mod_info_downloads_reformat_step_counts <- function(dat) {
+    dat |>
+      dplyr::summarise(
+        .by = -c(.data$model_run, .data$value),
+        model_runs = list(.data$value),
+        value = purrr::map_dbl(.data$model_runs, mean)
+      )
+  }
+
   # Get different cuts of the model output data
   trust <- get_stepcounts(r_primary) # variant2
   trust_v1 <- get_stepcounts(r_secondary) # variant1
+
+  if(r_primary$params$app_version=="v5.2"){
+    trust <- mod_info_downloads_reformat_step_counts(validation_report_ndg2_azkit_stepcounts)
+  }
 
   trust_los <- get_losgroup(r_primary) # variant2
   trust_los_v1 <- get_losgroup(r_secondary) # variant1

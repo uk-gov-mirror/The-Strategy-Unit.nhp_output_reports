@@ -351,6 +351,17 @@ get_run_metadata <- function(scheme_code, result_sets, run_stages) {
   dplyr::lst(metadata_secondary, metadata_primary)
 }
 
+split_version_string <- function(version_string) {
+  # Check format is in the form v1.2 (model version stored as major-minor only)
+  stopifnot(stringr::str_detect(version_string, "v\\d+\\.\\d+$"))
+
+  version_string |>
+    stringr::str_remove("^v") |>
+    stringr::str_split_1("\\.") |>
+    as.numeric() |>
+    setNames("major", "minor")
+}
+
 get_sites <- function(meta) {
   primary_meta <- meta[["metadata_primary"]] # take sites from primary run
   primary_cols <- names(primary_meta)

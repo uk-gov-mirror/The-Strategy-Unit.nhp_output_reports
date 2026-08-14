@@ -96,9 +96,30 @@ populate_template <- function(
   # Get results files
   if (!is.null(run_stages)) {
     meta <- get_run_metadata(scheme_code, result_sets, run_stages)
-    primary_file <- dplyr::pull(meta$metadata_primary, file)
-    secondary_file <- dplyr::pull(meta$metadata_secondary, file)
+
+    primary_version <- meta[["metadata_primary"]] |>
+      dplyr::pull("app_version") |>
+      split_version_string()
+
+    secondary_version <- meta[["metadata_secondary"]] |>
+      dplyr::pull("app_version") |>
+      split_version_string()
+
+    # Choose zipped-json paths by default
+    primary_file <- meta[["metadata_primary"]] |> dplyr::pull(file)
+    secondary_file <- meta[["metadata_secondary"]] |> dplyr::pull(file)
+
+    # Choose the results directory path (parquets) if >=v5.2
+    if (primary_version["major"] >= 5 && primary_version["minor"] >= 2) {
+      primary_file <- meta[["metadata_primary"]] |>
+        dplyr::pull(aggregated_results_path)
+    }
+    if (secondary_version["major"] >= 5 && secondary_version["minor"] >= 2) {
+      secondary_file <- meta[["metadata_secondary"]] |>
+        dplyr::pull(aggregated_results_path)
+    }
   }
+
   if (!is.null(scenario_files)) {
     primary_file <- scenario_files[["primary"]]
     secondary_file <- scenario_files[["secondary"]]

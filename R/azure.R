@@ -87,11 +87,12 @@ get_container <- function(
     AzureStor::storage_container(container_name)
 }
 
-#' Unzip, Read and Parse an NHP Results File
+#' Read and Parse NHP Results Files
 #'
 #' @param container_results Name of a blob_container/storage_container object
 #'     that stores results files.
-#' @param file Character. The path to a file in the named `container`.
+#' @param file Character. The path to a results file (zipped json) or a results
+#'     directory (containing parquets) in the named `container`.
 #'
 #' @details Assumes you've connected to the container that holds NHP results.
 #'
@@ -110,14 +111,35 @@ get_nhp_results <- function(
   container_results = Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS"),
   file
 ) {
-  container <- get_container(container_name = container_results)
+  container <- azkit::get_container(container_results)
 
-  temp_file <- withr::local_tempfile()
-  AzureStor::download_blob(container, file, temp_file)
+  is_json_gz <- tools::file_ext(file) == "gz"
+  is_parquet <- stringr::str_detect(file, "^aggregated-model-results")
 
-  readBin(temp_file, raw(), n = file.size(temp_file)) |>
-    jsonlite::parse_gzjson_raw(simplifyVector = FALSE) |>
-    parse_results() # applies patch logic dependent on app_version in params
+  if (is_json_gz) {
+    # TODO: replace with azkit
+    temp_file <- withr::local_tempfile()
+    AzureStor::download_blob(container, file, temp_file)
+
+    nhp_results <- readBin(temp_file, raw(), n = file.size(temp_file)) |>
+      jsonlite::parse_gzjson_raw(simplifyVector = FALSE) |>
+      parse_results() # applies patch logic dependent on app_version in params
+  }
+
+  if (is_parquet) {
+    params <- azkit::read_azure_json(container, file.path(file, "params.json"))
+
+    nhp_results <- azkit::read_azure_json(
+      container,
+      file.path(file, "variants.json")
+    )
+
+    results <- reskit::read_results_parquet_files(container, file)
+
+    nhp_results <- dplyr::lst(params, population_variants, results)
+  }
+
+  nhp_results
 }
 
 get_baseline_and_projections <- function(r_trust) {

@@ -44,49 +44,6 @@ get_nhp_result_sets <- function(
     )
 }
 
-#' Connect to an Azure Container
-#'
-#' @param tenant Character. The tenant ID.
-#' @param app_id Character. The app ID.
-#' @param ep_uri Character. The endpoint URI.
-#' @param container_name Character. The container name. Use `Sys.getenv()` with
-#'     `"AZ_STORAGE_CONTAINER_RESULTS"` or `"AZ_STORAGE_CONTAINER_RESULTS"`.
-#'
-#' @details All arguments default to environmental variables stored in your
-#'     .Renviron file. Note that you'll be routed automatically to the browser
-#'     for authentication if you don't have a cached token already.
-#'
-#' @return A blob_container/storage_container object.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{get_container()}
-get_container <- function(
-  tenant = Sys.getenv("AZ_TENANT_ID"),
-  app_id = Sys.getenv("AZ_APP_ID"),
-  ep_uri = Sys.getenv("AZ_STORAGE_EP"),
-  container_name
-) {
-  # if the app_id variable is empty, we assume that this is running on an Azure VM,
-  # and then we will use Managed Identities for authentication.
-  token <- if (app_id != "") {
-    AzureAuth::get_azure_token(
-      resource = "https://storage.azure.com",
-      tenant = Sys.getenv("AZ_TENANT_ID"),
-      app = app_id,
-      auth_type = "device_code"
-    )
-  } else {
-    AzureAuth::get_managed_token("https://storage.azure.com/") |>
-      AzureAuth::extract_jwt()
-  }
-
-  ep_uri |>
-    AzureStor::blob_endpoint(token = token) |>
-    AzureStor::storage_container(container_name)
-}
-
 #' Read and Parse NHP Results Files
 #'
 #' @param container_results Name of a blob_container/storage_container object

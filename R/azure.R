@@ -48,8 +48,8 @@ get_nhp_result_sets <- function(
 #'
 #' @param container_results Name of a blob_container/storage_container object
 #'     that stores results files.
-#' @param file Character. The path to a results file (zipped json) or a results
-#'     directory (containing parquets) in the named `container`.
+#' @param results_path Character. The path to a results file (zipped json) or a
+#'     results directory (containing parquets) in the named `container`.
 #'
 #' @details Assumes you've connected to the container that holds NHP results.
 #'
@@ -66,17 +66,17 @@ get_nhp_result_sets <- function(
 #' }
 get_nhp_results <- function(
   container_results = Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS"),
-  file
+  results_path
 ) {
   container <- azkit::get_container(container_results)
 
-  is_json_gz <- tools::file_ext(file) == "gz"
-  is_parquet <- stringr::str_detect(file, "^aggregated-model-results")
+  is_json_gz <- tools::file_ext(results_path) == "gz"
+  is_parquet <- stringr::str_detect(results_path, "^aggregated-model-results")
 
   if (is_json_gz) {
     # TODO: replace with azkit
     temp_file <- withr::local_tempfile()
-    AzureStor::download_blob(container, file, temp_file)
+    AzureStor::download_blob(container, results_path, temp_file)
 
     nhp_results <- readBin(temp_file, raw(), n = file.size(temp_file)) |>
       jsonlite::parse_gzjson_raw(simplifyVector = FALSE) |>
@@ -84,14 +84,17 @@ get_nhp_results <- function(
   }
 
   if (is_parquet) {
-    params <- azkit::read_azure_json(container, file.path(file, "params.json"))
-
-    nhp_results <- azkit::read_azure_json(
+    params <- azkit::read_azure_json(
       container,
-      file.path(file, "variants.json")
+      file.path(results_path, "params.json")
     )
 
-    results <- reskit::read_results_parquet_files(container, file)
+    population_variants <- azkit::read_azure_json(
+      container,
+      file.path(results_path, "variants.json")
+    )
+
+    results <- reskit::read_results_parquet_files(container, results_path)
 
     nhp_results <- dplyr::lst(params, population_variants, results)
   }

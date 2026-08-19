@@ -380,7 +380,7 @@ split_version_string <- function(version_string) {
     stringr::str_remove("^v") |>
     stringr::str_split_1("\\.") |>
     as.numeric() |>
-    setNames("major", "minor")
+    setNames(c("major", "minor"))
 }
 
 get_sites <- function(meta) {

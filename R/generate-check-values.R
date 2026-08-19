@@ -150,8 +150,8 @@ get_comparison_data <- function(
   cat("- A&E:", if(is.null(site_codes$aae)) "all" else site_codes$aae, "\n")
 
   cat("* Fetching results...\n")
-  r_primary <- meta$metadata_primary |> dplyr::pull(file) |> get_nhp_results(file = _)
-  r_secondary <- meta$metadata_secondary |> dplyr::pull(file) |> get_nhp_results(file = _)
+  r_primary <- meta$metadata_primary |> dplyr::pull(file) |> get_nhp_results(results_path = _)
+  r_secondary <- meta$metadata_secondary |> dplyr::pull(file) |> get_nhp_results(results_path = _)
 
   cat("* Generate values list...\n")
   values_list <- generate_values_list(r_secondary, r_primary, site_codes)

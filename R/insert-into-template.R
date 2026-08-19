@@ -178,11 +178,11 @@ populate_template <- function(
 
   # Read results data
   logr::log_print(glue::glue("* Fetching results..."))
-  r_primary <- get_nhp_results(file = primary_file)
-  r_secondary <- get_nhp_results(file = secondary_file)
+  r_primary <- get_nhp_results(results_path = primary_file)
+  r_secondary <- get_nhp_results(results_path = secondary_file)
   if (report_type == "addendum") {
-    r_finalreportndg2_file <- get_nhp_results(file = finalreportndg2_file)
-    r_finalreportndg1_file <- get_nhp_results(file = finalreportndg1_file)
+    r_finalreportndg2_file <- get_nhp_results(results_path = finalreportndg2_file)
+    r_finalreportndg1_file <- get_nhp_results(results_path = finalreportndg1_file)
   }
 
   # Read Word template

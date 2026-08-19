@@ -62,20 +62,20 @@ meta <- purrr::map(
 )
 
 r_final_report_ndg1 <- meta[[1]]$metadata_primary |>
-  dplyr::pull(file) |> get_nhp_results(file = _)
+  dplyr::pull(file) |> get_nhp_results(results_path = _)
 
 r_final_report_ndg2 <- meta[[2]]$metadata_primary |>
   dplyr::pull(file) |>
   get_nhp_results(file = _) #SOC
 
 r_validation_report_ndg2 <- meta[[3]]$metadata_primary |>
-  dplyr::pull(file) |> get_nhp_results(file = _) #OBC
+  dplyr::pull(file) |> get_nhp_results(results_path = _) #OBC
 
 r_validation_report_ndg3 <- meta[[4]]$metadata_primary |>
-  dplyr::pull(file) |> get_nhp_results(file = _)
+  dplyr::pull(file) |> get_nhp_results(results_path = _)
 
 r_opening_date_scenario <- meta[[5]]$metadata_primary |>
-  dplyr::pull(file) |> get_nhp_results(file = _)
+  dplyr::pull(file) |> get_nhp_results(results_path = _)
 
 # in CAGR calc, assumes this raises to power of forecast period? Need to account for difference if using opening scenario
 # time in years from baseline (23/24) to horizon (41/42 for usual)
@@ -155,5 +155,3 @@ scenarios_used_details <-  tibble::tibble(
               glue::glue(r_validation_report_ndg2[["params"]][["end_year"]],"/",r_validation_report_ndg2[["params"]][["end_year"]]+1)),
   model_version = c(r_final_report_ndg2[["params"]][["app_version"]],r_validation_report_ndg2[["params"]][["app_version"]])
 )
-
-

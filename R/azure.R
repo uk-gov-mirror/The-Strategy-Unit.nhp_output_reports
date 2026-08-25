@@ -40,7 +40,7 @@ get_nhp_result_sets <- function(
     dplyr::mutate(
       create_datetime = create_datetime |>
         lubridate::as_datetime() |>
-        format("%Y%M%d_%H%M%S") # YYYYMMDD_HHMMSS
+        format("%Y%m%d_%H%M%S") # YYYYMMDD_HHMMSS
     )
 }
 

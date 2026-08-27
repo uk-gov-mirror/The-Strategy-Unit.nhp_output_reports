@@ -96,9 +96,30 @@ populate_template <- function(
   # Get results files
   if (!is.null(run_stages)) {
     meta <- get_run_metadata(scheme_code, result_sets, run_stages)
-    primary_file <- dplyr::pull(meta$metadata_primary, file)
-    secondary_file <- dplyr::pull(meta$metadata_secondary, file)
+
+    primary_version <- meta[["metadata_primary"]] |>
+      dplyr::pull("app_version") |>
+      split_version_string()
+
+    secondary_version <- meta[["metadata_secondary"]] |>
+      dplyr::pull("app_version") |>
+      split_version_string()
+
+    # Choose zipped-json paths by default
+    primary_file <- meta[["metadata_primary"]] |> dplyr::pull(file)
+    secondary_file <- meta[["metadata_secondary"]] |> dplyr::pull(file)
+
+    # Choose the results directory path (parquets) if >=v5.2
+    if (primary_version["major"] >= 5 && primary_version["minor"] >= 2) {
+      primary_file <- meta[["metadata_primary"]] |>
+        dplyr::pull(aggregated_results_path)
+    }
+    if (secondary_version["major"] >= 5 && secondary_version["minor"] >= 2) {
+      secondary_file <- meta[["metadata_secondary"]] |>
+        dplyr::pull(aggregated_results_path)
+    }
   }
+
   if (!is.null(scenario_files)) {
     primary_file <- scenario_files[["primary"]]
     secondary_file <- scenario_files[["secondary"]]
@@ -157,11 +178,11 @@ populate_template <- function(
 
   # Read results data
   logr::log_print(glue::glue("* Fetching results..."))
-  r_primary <- get_nhp_results(file = primary_file)
-  r_secondary <- get_nhp_results(file = secondary_file)
+  r_primary <- get_nhp_results(results_path = primary_file)
+  r_secondary <- get_nhp_results(results_path = secondary_file)
   if (report_type == "addendum") {
-    r_finalreportndg2_file <- get_nhp_results(file = finalreportndg2_file)
-    r_finalreportndg1_file <- get_nhp_results(file = finalreportndg1_file)
+    r_finalreportndg2_file <- get_nhp_results(results_path = finalreportndg2_file)
+    r_finalreportndg1_file <- get_nhp_results(results_path = finalreportndg1_file)
   }
 
   # Read Word template
@@ -349,6 +370,17 @@ get_run_metadata <- function(scheme_code, result_sets, run_stages) {
   )
 
   dplyr::lst(metadata_secondary, metadata_primary)
+}
+
+split_version_string <- function(version_string) {
+  # Check format is in the form v1.2 (model version stored as major-minor only)
+  stopifnot(stringr::str_detect(version_string, "v\\d+\\.\\d+$"))
+
+  version_string |>
+    stringr::str_remove("^v") |>
+    stringr::str_split_1("\\.") |>
+    as.numeric() |>
+    setNames(c("major", "minor"))
 }
 
 get_sites <- function(meta) {

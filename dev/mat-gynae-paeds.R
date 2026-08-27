@@ -26,8 +26,8 @@ meta <- get_run_metadata(scheme_code, result_sets, run_stages)
 site_codes <- get_sites(scheme_code)
 primary_file <- dplyr::pull(meta$metadata_primary, file)
 secondary_file <- dplyr::pull(meta$metadata_secondary, file)
-r_primary <- get_nhp_results(file = primary_file)
-r_secondary <- get_nhp_results(file = secondary_file)
+r_primary <- get_nhp_results(results_path = primary_file)
+r_secondary <- get_nhp_results(results_path = secondary_file)
 
 # Helper functions ----
 
